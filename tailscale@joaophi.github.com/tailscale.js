@@ -7,8 +7,18 @@ import { setTimeout } from "./timeout.js";
 
 class TailscaleApiClient {
   constructor() {
+    const nativePath = "/var/run/tailscale/tailscaled.sock";
+    const snapPath = "/var/snap/tailscale/common/socket/tailscaled.sock";
+    let socketPath;
+    if (GLib.file_test(nativePath, GLib.FileTest.EXISTS)) {
+      socketPath = nativePath;
+    } else if (GLib.file_test(snapPath, GLib.FileTest.EXISTS)) {
+      socketPath = snapPath;
+    } else {
+      throw new Error("Cannot find tailscaled.sock in either standard or snap locations.");
+    }
     const address = new Gio.UnixSocketAddress({
-      path: "/var/run/tailscale/tailscaled.sock",
+      path: socketPath,
     });
     this.session = new Soup.Session({
       "remote-connectable": address,
